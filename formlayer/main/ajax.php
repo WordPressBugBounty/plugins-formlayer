@@ -176,6 +176,59 @@ class Ajax{
 		
 		foreach($fields as $field){
 			$input_name = \FormLayer\Util::get_field_name($field);
+			
+			if(in_array($field['type'], ['file', 'image', 'camera'])){
+				// Validate and sanitize $_FILES input before use (fixes InputNotValidated + InputNotSanitized warnings)
+				$file_name = isset($_FILES[$input_name]['name']) ? sanitize_file_name($_FILES[$input_name]['name']) : '';
+				$file_error = isset($_FILES[$input_name]['error']) ? (int) $_FILES[$input_name]['error'] : -1;
+				$file_tmp = isset($_FILES[$input_name]['tmp_name']) ? sanitize_text_field($_FILES[$input_name]['tmp_name']) : '';
+				$file_size = isset($_FILES[$input_name]['size']) ? (int) $_FILES[$input_name]['size'] : 0;
+				$file_type = isset($_FILES[$input_name]['type']) ? sanitize_mime_type($_FILES[$input_name]['type']) : '';
+
+				$file_data  = !empty($file_name) ? [
+					'name' => $file_name,
+					'error' => $file_error,
+					'tmp_name' => $file_tmp,
+					'size' => $file_size,
+					'type' => $file_type,
+				] : [];
+
+				$file_uploaded = !empty($file_name) && $file_error === UPLOAD_ERR_OK;
+
+				if(!empty($field['required']) && !$file_uploaded){
+					wp_send_json_error(['message' => !empty($global_settings['msg_required']) ? $global_settings['msg_required'] : __('This field is required.', 'formlayer')]);
+				}
+
+				if(!empty($file_uploaded)){
+					if(!function_exists('wp_handle_upload')){
+						require_once(ABSPATH . 'wp-admin/includes/file.php');
+					}
+
+					if(in_array($field['type'], ['image', 'camera'])){
+						$file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+						$allowed_image_exts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
+						if(!in_array($file_ext, $allowed_image_exts)){
+							wp_send_json_error(['message' => __('Invalid image format. Allowed formats: JPG, JPEG, PNG, GIF, WEBP, BMP.', 'formlayer')]);
+						}
+					}
+
+					$uploadedfile    = $file_data;
+					$upload_overrides = ['test_form' => false];
+					$movefile        = wp_handle_upload($uploadedfile, $upload_overrides);
+
+					if($movefile && !isset($movefile['error'])){
+						$submitted_data[$input_name] = $movefile['url'];
+					} else {
+						$error_message = isset($movefile['error']) ? $movefile['error'] : 'Unknown error';
+						/* translators: %s: Error message returned by the file upload handler. */
+						wp_send_json_error(['message' => sprintf(__('File upload error: %s', 'formlayer'), $error_message)]);
+					}
+				} else {
+					$submitted_data[$input_name] = '';
+				}
+				continue;
+			}
+
 			$value = isset($submitted_data[$input_name]) ? $submitted_data[$input_name] : '';
 			
 			// Required check

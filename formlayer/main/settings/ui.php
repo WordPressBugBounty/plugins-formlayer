@@ -32,6 +32,9 @@ class UI{
 					self::tab_item('entries', 'Entries' . $unread_badge, '<span class="dashicons dashicons-database-view"></span>');
 					self::tab_item('reports', 'Reports', '<span class="dashicons dashicons-chart-bar"></span>');
 					self::tab_item('integrations', 'Integrations', '<span class="dashicons dashicons-admin-links"></span>');
+					if(defined('FORMLAYER_PRO_VERSION')){
+						self::tab_item('tools', 'Tools', '<span class="dashicons dashicons-migrate"></span>');
+					}
 					self::tab_item('settings', 'Settings', '<span class="dashicons dashicons-admin-settings"></span>');
 					self::tab_item('support', 'Support', '<span class="dashicons dashicons-sos"></span>');
 					if (defined('FORMLAYER_PRO_VERSION')) {

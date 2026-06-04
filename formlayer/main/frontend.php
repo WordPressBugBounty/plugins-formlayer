@@ -14,6 +14,7 @@ class Frontend{
 	}
 
 	static function enqueue_assets(){
+		wp_enqueue_style('dashicons');
 		wp_enqueue_style('formlayer-frontend', FORMLAYER_PLUGIN_URL . 'assets/css/frontend.css', [], FORMLAYER_VERSION);
 		wp_enqueue_script('formlayer-frontend', FORMLAYER_PLUGIN_URL . 'assets/js/frontend.js', ['jquery'], FORMLAYER_VERSION, true);
 
@@ -130,7 +131,7 @@ class Frontend{
 		}
 
 		$output = '<div class="formlayer-form-wrapper" id="formlayer-form-' . esc_attr($form_id) . '">
-			<form class="formlayer-form" data-form-id="' . esc_attr($form_id) . '">
+			<form class="formlayer-form" data-form-id="' . esc_attr($form_id) . '" enctype="multipart/form-data">
 				<div class="formlayer-form-status"></div>
 				<div class="formlayer-form-fields-wrapper">
 				' .$html; // sanitized above

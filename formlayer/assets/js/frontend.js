@@ -113,4 +113,63 @@ jQuery(document).ready(function($){
 	}).on('mouseleave', '.formlayer-rating .dashicons', function(){
 		$('.formlayer-rating .dashicons').removeClass('hover');
 	});
+
+  // File & Image Upload Preview
+  $('.formlayer-file-real').on('change', function(e){
+		let input = this,
+		$wrap = $(input).closest('.formlayer-field-wrap'),
+		$chosenName = $wrap.find('.formlayer-file-chosen-name');
+
+		// Remove any existing preview container
+		$wrap.find('.formlayer-file-preview-container').remove();
+
+		if (input.files && input.files[0]) {
+			let file = input.files[0];
+			$chosenName.text(file.name);
+
+			// Create preview container
+			let $previewContainer = $(`
+				<div class="formlayer-file-preview-container" style="margin-top:10px; display:flex; align-items:center; gap:12px; padding:10px; border:1px dashed #ccc; border-radius:6px; background:#f9f9f9; max-width: 100%;">
+					<img class="formlayer-file-preview-img" src="" style="width:60px; height:60px; border-radius:4px; display:none; object-fit:cover; border:1px solid #ddd; background:#fff;">
+					<span class="formlayer-file-preview-icon dashicons dashicons-document" style="font-size:36px; width:36px; height:36px; display:none; color:#5525d6; line-height:36px;"></span>
+					<div style="display:flex; flex-direction:column; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left; margin-right: auto;">
+						<span class="formlayer-file-preview-name" style="font-size:13px; font-weight:600; color:#333; overflow:hidden; text-overflow:ellipsis; max-width: 200px;"></span>
+						<span class="formlayer-file-preview-size" style="font-size:11px; color:#777; margin-top: 2px;"></span>
+					</div>
+					<span class="formlayer-file-preview-remove dashicons dashicons-no-alt" style="cursor:pointer; color:#999; font-size:20px; width:20px; height:20px; line-height:20px; text-align:center; transition:color 0.2s;" onmouseover="this.style.color='#d9534f'" onmouseout="this.style.color='#999'"></span>
+				</div>
+			`);
+
+			$previewContainer.find('.formlayer-file-preview-name').text(file.name);
+			
+			// Format size
+			let sizeStr = (file.size / 1024).toFixed(1) + ' KB';
+			if (file.size > 1024 * 1024) {
+				sizeStr = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
+			}
+			$previewContainer.find('.formlayer-file-preview-size').text(sizeStr);
+
+			// Show preview image if it's an image
+			if (file.type.match('image.*')) {
+				let reader = new FileReader();
+				reader.onload = function(e) {
+					$previewContainer.find('.formlayer-file-preview-img').attr('src', e.target.result).show();
+				}
+				reader.readAsDataURL(file);
+			} else {
+				$previewContainer.find('.formlayer-file-preview-icon').show();
+			}
+
+			// Add click event for remove cross button
+			$previewContainer.find('.formlayer-file-preview-remove').on('click', function(){
+				$(input).val('');
+				$chosenName.text('No file chosen');
+				$previewContainer.remove();
+			});
+
+			$wrap.append($previewContainer);
+		} else {
+			$chosenName.text('No file chosen');
+		}
+	});
 });

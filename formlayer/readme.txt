@@ -1,9 +1,9 @@
 === FormLayer ===
 Contributors: softaculous
 Tags: forms, custom form, contact form, forms builder
-Requires at least: 7.0
+Requires at least: 5.0
 Tested up to: 7.0
-Stable tag: 1.0.4
+Stable tag: 1.0.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -76,6 +76,11 @@ Yes, you can export your form submissions to CSV directly from the entries dashb
 3. Settings
 
 == Changelog ==
+
+= 1.0.5 =
+
+* [Pro-Feature] Added a form import/export feature.
+* [Bug-Fix Pro] There was an issue with attachment fields, this has been fixed.
 
 = 1.0.4 =
 
