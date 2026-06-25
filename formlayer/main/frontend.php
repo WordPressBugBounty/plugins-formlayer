@@ -71,7 +71,7 @@ class Frontend{
 			return '<div class="formlayer-error">' . esc_html__('Form is not published', 'formlayer') . '</div>';
 		}
 
-		self::enqueue_captcha_scripts();
+		self::enqueue_captcha_scripts($form);
 
 		return self::render_form($form);
 	}
@@ -544,19 +544,59 @@ class Frontend{
 		}
 	}
 
-	static function enqueue_captcha_scripts(){
-		global $post;
+	static function enqueue_captcha_scripts($form = null){
+		if(!$form){
+			return;
+		}
 
-		if(is_a($post, 'WP_Post') && has_shortcode($post->post_content, 'formlayer')){
-			$settings = get_option('formlayer_settings', []);
-			if (!empty($settings['captcha_h_site_key'])) {
-				wp_enqueue_script('hcaptcha', 'https://js.hcaptcha.com/1/api.js', [], FORMLAYER_VERSION, true);
+		$providers = [];
+		$content = $form->post_content;
+		$data = json_decode($content, true);
+
+		if (json_last_error() === JSON_ERROR_NONE && is_array($data) && isset($data['fields'])) {
+			foreach($data['fields'] as $field){
+				if(isset($field['type']) && $field['type'] === 'captcha'){
+					$providers[] = isset($field['captcha_provider']) ? $field['captcha_provider'] : 'hcaptcha';
+				}
+			}
+		} else {
+			if(strpos($content, 'hcaptcha') !== false){
+				$providers[] = 'hcaptcha';
 			}
 
-			// Pro captcha providers - delegate to Pro plugin via action
-			do_action('formlayer_enqueue_captcha_scripts');
-	
+			if(strpos($content, 'recaptcha') !== false){
+				$providers[] = 'recaptcha';
+			}
+
+			if(strpos($content, 'turnstile') !== false){
+				$providers[] = 'turnstile';
+			}
+			
+			$blocks = parse_blocks($content);
+			foreach($blocks as $block){
+				if(strpos($block['blockName'], 'captcha') !== false || strpos($block['innerHTML'], 'captcha') !== false){
+					$attrs = isset($block['attrs']) ? $block['attrs'] : [];
+					if(isset($attrs['captcha_provider'])){
+						$providers[] = $attrs['captcha_provider'];
+					} elseif(isset($attrs['provider'])){
+						$providers[] = $attrs['provider'];
+					}
+				}
+			}
 		}
+
+		$providers = array_unique($providers);
+		if(empty($providers)){
+			return;
+		}
+
+		$settings = get_option('formlayer_settings', []);
+		if (in_array('hcaptcha', $providers, true) && !empty($settings['captcha_h_site_key'])) {
+			wp_enqueue_script('hcaptcha', 'https://js.hcaptcha.com/1/api.js', [], FORMLAYER_VERSION, true);
+		}
+
+		// Pro captcha providers - delegate to Pro plugin via action
+		do_action('formlayer_enqueue_captcha_scripts', $providers);
 	}
 	
 	static function get_countries() {

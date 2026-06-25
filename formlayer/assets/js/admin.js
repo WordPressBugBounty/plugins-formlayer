@@ -209,7 +209,7 @@ jQuery(document).ready(function($){
 				$btn.closest('tr').fadeOut(300, function(){
 					$(this).remove();
 					// If no rows left, show "No forms found"
-					let $tbody = $('.formlayer-table tbody');
+					let $tbody = $('#formlayer-tab-forms .formlayer-table tbody');
 					if ($tbody.find('tr').length === 0) {
 						$tbody.html(`
 							<tr>
@@ -248,7 +248,7 @@ jQuery(document).ready(function($){
 				from_email: '{admin_email}',
 				bcc: '',
 				subject: 'New Form Submission',
-				message: 'You have a new submission: \n {all_fields}'
+				message: 'You have a new submission:\n\n{all_fields}'
 			},
 			confirmations: {
 				type: 'message',
@@ -299,6 +299,28 @@ jQuery(document).ready(function($){
 	};
 
 	// Template engine helper
+	function generate_unique_name_attr(base_name, ignore_id = null) {
+		let slug = (base_name || '').toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+		if (!slug) slug = 'field';
+		
+		let is_unique = false;
+		let name_attr = slug;
+		let counter = 1;
+		
+		while (!is_unique) {
+			let exists = state.fields.some(function(f) { 
+				return f.id !== ignore_id && (f.name_attr === name_attr || (!f.name_attr && ('field_' + f.id) === name_attr)); 
+			});
+			if (!exists) {
+				is_unique = true;
+			} else {
+				name_attr = slug + '_' + counter;
+				counter++;
+			}
+		}
+		return name_attr;
+	}
+
 	const utils = {
 		tmpl: function(key, data = {}) {
 			let html = formlayer_admin.html_templates[key] || '';
@@ -880,6 +902,13 @@ jQuery(document).ready(function($){
 
 		let advanced_content = '';
 
+		// Field Name / Merge Tag
+		advanced_content += utils.tmpl('control_group', {
+			label: 'Name Attribute / Merge Tag',
+			info_html: utils.tmpl('info_icon', { title: 'Use {field_name} in Email Notifications to output this field\'s value' }),
+			input_html: `<input type="text" class="formlayer-input-full" data-prop="name_attr" value="${field.name_attr || generate_unique_name_attr(field.label, field.id)}" placeholder="${generate_unique_name_attr(field.label, field.id)}">`
+		});
+
 		if(field.type === 'name'){
 			advanced_content += `
 				<div class="formlayer-control-group">
@@ -1023,6 +1052,7 @@ jQuery(document).ready(function($){
 		$('#form-setting-notif-fromemail').val(s.notifications.from_email || '');
 		$('#form-setting-notif-bcc').val(s.notifications.bcc || '');
 		$('#form-setting-notif-subject').val(s.notifications.subject);
+		$('#form-setting-notif-format').val(s.notifications.format || 'html').trigger('change');
 		$('#form-setting-notif-message').val(s.notifications.message);
 		$('#form-setting-conf-type').val(s.confirmations.type).trigger('change');
 		$('#form-setting-conf-message').val(s.confirmations.message);
@@ -1044,6 +1074,24 @@ jQuery(document).ready(function($){
 			});
 		}
 		$('#form-setting-custom-css').val(s.custom_css);
+		
+		// Render Merge Tags
+		let tags_html = `<span class="formlayer-badge-tag" data-tag="{all_fields}">{all_fields}</span>`;
+		tags_html += `<span class="formlayer-badge-tag" data-tag="{admin_email}">{admin_email}</span>`;
+		tags_html += `<span class="formlayer-badge-tag" data-tag="{form_title}">{form_title}</span>`;
+		tags_html += `<span class="formlayer-badge-tag" data-tag="{site_url}">{site_url}</span>`;
+		
+		state.fields.forEach(function(f){
+			if(['submit', 'section', 'gdpr', 'terms'].includes(f.type)) return;
+			if (!f.name_attr) {
+				f.name_attr = generate_unique_name_attr(f.label, f.id);
+			}
+			let name = f.name_attr;
+			let label = f.label || name;
+			tags_html += `<span class="formlayer-badge-tag" data-tag="{${name}}" title="${label}">{${name}}</span>`;
+		});
+		
+		$('#formlayer-dynamic-merge-tags').html(tags_html);
 	}
 
 	function sync_ui_to_settings(){
@@ -1054,6 +1102,7 @@ jQuery(document).ready(function($){
 		state.form_settings.notifications.from_email = $('#form-setting-notif-fromemail').val();
 		state.form_settings.notifications.bcc = $('#form-setting-notif-bcc').val();
 		state.form_settings.notifications.subject = $('#form-setting-notif-subject').val();
+		state.form_settings.notifications.format = $('#form-setting-notif-format').val();
 		state.form_settings.notifications.message = $('#form-setting-notif-message').val();
 		state.form_settings.confirmations.type = $('#form-setting-conf-type').val();
 		state.form_settings.confirmations.message = $('#form-setting-conf-message').val();
@@ -1105,7 +1154,7 @@ jQuery(document).ready(function($){
 				
 				// Dynamically add or update row in forms table without reload
 				if(response.data.row_html){
-					let $tbody = $('.formlayer-table tbody');
+					let $tbody = $('#formlayer-tab-forms .formlayer-table tbody');
 					if(is_new){
 						// Remove empty state row if it exists
 						if($tbody.find('.formlayer-empty-title').length){
@@ -1209,6 +1258,7 @@ jQuery(document).ready(function($){
 				required: false,
 				options: ['Option 1', 'Option 2', 'Option 3']
 			};
+			new_field.name_attr = generate_unique_name_attr(new_field.label, new_field.id);
 			state.fields.push(new_field);
 			state.selected_field_id = new_field.id;
 			render();
@@ -1237,6 +1287,7 @@ jQuery(document).ready(function($){
 		if(idx !== -1){
 			const cloned = JSON.parse(JSON.stringify(state.fields[idx]));
 			cloned.id = 'f' + Date.now();
+			cloned.name_attr = generate_unique_name_attr(cloned.label, cloned.id);
 			state.fields.splice(idx + 1, 0, cloned);
 			render();
 		}
@@ -1397,6 +1448,20 @@ jQuery(document).ready(function($){
 	// Fullscreen Toggle
 	$('.formlayer-fullscreen-toggle').on('click', function(){
 		$('.formlayer-admin-wrapper').toggleClass('formlayer-builder-fullscreen');
+	});
+
+	// Insert Merge Tag
+	$('#formlayer-dynamic-merge-tags').on('click', '.formlayer-badge-tag', function(){
+		let tag = $(this).data('tag');
+		let $textarea = $('#form-setting-notif-message');
+		let pos = $textarea.prop('selectionStart');
+		let val = $textarea.val();
+		$textarea.val(val.substring(0, pos) + tag + val.substring(pos));
+		$textarea.prop('selectionStart', pos + tag.length);
+		$textarea.prop('selectionEnd', pos + tag.length);
+		$textarea.focus();
+		// Trigger change to sync state later if needed
+		$textarea.trigger('input');
 	});
 
 	// Copy Shortcode

@@ -306,6 +306,12 @@ class Ajax{
 			$field_labels = \FormLayer\Util::get_form_field_labels($form_id);
 			$field_types = \FormLayer\Util::get_form_field_types($form_id);
 			$fields_text = "";
+			$fields_html = '<div style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); border: 1px solid #e5e7eb;">';
+			$fields_html .= '<div style="padding: 20px 30px 15px; border-bottom: 1px solid #e5e7eb; background-color: #ffffff;">';
+			$fields_html .= '<h2 style="margin: 0; color: #111827; font-size: 18px; font-weight: 600;">Submission Details</h2>';
+			$fields_html .= '</div>';
+			$fields_html .= '<div style="padding: 25px 30px 10px;">';
+			
 			foreach($submitted_data as $key => $val) {
 				if ($key === '__source_url') continue;
 
@@ -322,15 +328,51 @@ class Ajax{
 				}
 
 				$fields_text .= $label . ": " . $val . "\n";
+				
+				$fields_html .= '<div style="margin-bottom: 25px;">';
+				$fields_html .= '<div style="font-weight: 600; color: #111827; font-size: 15px; margin-bottom: 8px; display: block;">' . esc_html($label) . '</div>';
+				
+				if(strpos($val, "\n") !== false) {
+					$fields_html .= '<div style="color: #4b5563; font-size: 15px; background: #f9fafb; padding: 12px 16px; border-radius: 6px; border: 1px solid #e5e7eb; white-space: pre-wrap; margin: 0;">' . esc_html($val) . '</div>';
+				} else {
+					$fields_html .= '<div style="color: #4b5563; font-size: 15px; background: #f9fafb; padding: 12px 16px; border-radius: 6px; border: 1px solid #e5e7eb; margin: 0;">' . esc_html($val) . '</div>';
+				}
+				$fields_html .= '</div>';
 			}
+
+			$fields_html .= '</div>'; // End inner padding div
+			$fields_html .= '</div>'; // End card div
 
 			if (!empty($submitted_data['__source_url'])) {
 				$fields_text .= "\nSource URL: " . $submitted_data['__source_url'] . "\n";
+				$fields_html .= '<div style="margin-top: 20px; font-size: 15px; color: #4b5563;">';
+				$fields_html .= '<strong style="color: #111827;">Source URL:</strong> <a href="' . esc_url($submitted_data['__source_url']) . '" style="color: #3b82f6; text-decoration: none;">' . esc_html($submitted_data['__source_url']) . '</a>';
+				$fields_html .= '</div>';
+			}
+			
+			$is_html = false;
+			$format = isset($settings['notifications']['format']) ? $settings['notifications']['format'] : 'html';
+			
+			if($format === 'html'){
+				$is_html = true;
+			}
+			
+			if($is_html){
+				// Make the default text look nice in HTML if it's present
+				$message_body = str_replace("You have a new submission:", '<h2 style="margin: 0 0 20px 0; color: #111827; font-size: 20px; font-weight: 600;">You have a new submission</h2>', $message_body);
+				$message_body = str_replace("You have a new submission<br><br>", '<h2 style="margin: 0 0 20px 0; color: #111827; font-size: 20px; font-weight: 600;">You have a new submission</h2>', $message_body);
+				$message_body = str_replace("You have a new submission: \n ", '<h2 style="margin: 0 0 20px 0; color: #111827; font-size: 20px; font-weight: 600;">You have a new submission</h2>', $message_body);
+				
+				$message_body = wpautop($message_body);
+				$message_body = str_replace('<p>{all_fields}</p>', '{all_fields}', $message_body);
+			} else {
+				$message_body = str_ireplace(['<br>', '<br/>', '<br />'], "\n", $message_body);
+				$message_body = wp_strip_all_tags($message_body);
 			}
 			
 			// Replace Merge Tags
 			$merge_tags = [
-				'{all_fields}' => $fields_text,
+				'{all_fields}' => $is_html ? $fields_html : $fields_text,
 				'{admin_email}' => get_option('admin_email'),
 				'{form_title}' => $form->post_title,
 				'{site_title}' => get_bloginfo('name'),
@@ -342,12 +384,17 @@ class Ajax{
 				if(is_array($val)){
 					$val = implode(', ', $val);
 				}
-				$merge_tags['{'.$key.'}'] = $val;
+				$merge_tags['{'.$key.'}'] = $is_html ? esc_html($val) : $val;
 			}
 
 			$to = strtr($to, $merge_tags);
 			$subject = strtr($subject, $merge_tags);
 			$message_body = strtr($message_body, $merge_tags);
+
+			if($is_html){
+				$message_body = '<div style="background-color: #f9fafb; padding: 40px 20px; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif; color: #374151; line-height: 1.6;">' . '<div style="max-width: 600px; margin: 0 auto;">' . $message_body . 
+				'<div style="margin-top: 30px; text-align: center; font-size: 13px; color: #6b7280;">' . 'Powered by <a href="https://formlayer.net" style="color: #3b82f6; text-decoration: none;">FormLayer</a>' . '</div>' .'</div>' .'</div>';
+			}
 
 			$headers = [];
 			$from_name = !empty($settings['notifications']['from_name']) ? strtr($settings['notifications']['from_name'], $merge_tags) : get_bloginfo('name');
@@ -367,7 +414,16 @@ class Ajax{
 				$headers[] = "Bcc: " . strtr($settings['notifications']['bcc'], $merge_tags);
 			}
 
+			$content_type_filter = function() { return 'text/html'; };
+			if($is_html){
+				add_filter('wp_mail_content_type', $content_type_filter);
+			}
+
 			$mail_sent = @wp_mail($to, $subject, $message_body, $headers);
+			
+			if($is_html){
+				remove_filter('wp_mail_content_type', $content_type_filter);
+			}
 		}
 
 		// Trigger integrations via action hook
@@ -419,13 +475,13 @@ class Ajax{
 			wp_update_post([
 				'ID' => $form_id,
 				'post_title' => $title,
-				'post_content' => $form_json,
+				'post_content' => wp_slash($form_json),
 			]);
 		} else {
 			// Create new form
 			$form_id = wp_insert_post([
 				'post_title' => $title,
-				'post_content' => $form_json,
+				'post_content' => wp_slash($form_json),
 				'post_type' => 'formlayer_form',
 				'post_status' => 'publish',
 			]);

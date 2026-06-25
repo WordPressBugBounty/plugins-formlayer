@@ -3,7 +3,7 @@ Contributors: softaculous
 Tags: forms, custom form, contact form, forms builder
 Requires at least: 5.0
 Tested up to: 7.0
-Stable tag: 1.0.5
+Stable tag: 1.0.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -76,6 +76,12 @@ Yes, you can export your form submissions to CSV directly from the entries dashb
 3. Settings
 
 == Changelog ==
+
+= 1.0.6 =
+
+* [Feature] Added dynamic Merge Tags for the email notification body.
+* [Improvement] Added HTML email support with Plain Text/HTML format selection for Email Notifications.
+* [Bug-Fix] There was an issue with CAPTCHA switching in the form settings. This has been fixed.
 
 = 1.0.5 =
 

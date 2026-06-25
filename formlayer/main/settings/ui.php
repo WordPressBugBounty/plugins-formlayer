@@ -627,9 +627,21 @@ class UI{
 								<input type="text" id="form-setting-notif-subject" class="formlayer-input" placeholder="New Form Submission">
 							</div>
 							<div class="formlayer-settings-field">
-								<label>' . esc_html__('Message Body', 'formlayer') . '</label>
+								<label>' . esc_html__('Message Format', 'formlayer') . '</label>
+								<select id="form-setting-notif-format" class="formlayer-select">
+									<option value="html">HTML (Recommended)</option>
+									<option value="plain">Plain Text</option>
+								</select>
+							</div>
+							<div class="formlayer-settings-field">
+								<label style="display:flex; justify-content:space-between;">
+									<span>'.esc_html__('Message Body', 'formlayer').'</span>
+								</label>
 								<textarea id="form-setting-notif-message" class="formlayer-input" style="height:120px;"></textarea>
-								<p class="description">Use {all_fields} to include all form data.</p>
+								<div class="formlayer-merge-tags-wrapper" style="margin-top: 10px; background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0;">
+									<div style="font-size: 12px; font-weight: 600; margin-bottom: 8px; color: #475569;">Available Merge Tags (Click to insert)</div>
+									<div id="formlayer-dynamic-merge-tags" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
+								</div>
 							</div>
 						</div>
 
