@@ -21,7 +21,6 @@ class Frontend{
 		wp_localize_script('formlayer-frontend', 'formlayer_data', [
 			'ajax_url' => admin_url('admin-ajax.php'),
 			'nonce' => wp_create_nonce('formlayer-frontend'),
-			'messages' => get_option('formlayer_settings', []),
 			'is_pro' => defined('FORMLAYER_PRO_VERSION') ? true : false,
 		]);
 	}

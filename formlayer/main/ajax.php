@@ -510,6 +510,10 @@ class Ajax{
 	static function load_form(){
 		check_ajax_referer('formlayer_admin_nonce', 'nonce');
 
+		if(!current_user_can('manage_options')){
+			wp_send_json_error(['message' => esc_html__('Insufficient permissions', 'formlayer')]);
+		}
+
 		$display_id = isset($_GET['form_id']) ? intval($_GET['form_id']) : 0;
 		if (!$display_id) {
 			wp_send_json_error(['message' => 'Invalid form ID.']);
