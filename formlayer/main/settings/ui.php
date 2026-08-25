@@ -686,11 +686,14 @@ class UI{
 									<label>' . esc_html__('Success Message', 'formlayer') . '</label>
 									<textarea id="form-setting-conf-message" class="formlayer-input" style="height:100px;"></textarea>
 								</div>
-								<div class="formlayer-switch-wrapper">
-									<label class="formlayer-switch">
-										<input type="checkbox" id="form-setting-conf-hide" checked>
-										<span class="slider round"></span>
-									</label>
+								<div class="formlayer-settings-field">
+									<label>'.esc_html__('Hide form after successful submission', 'formlayer').'</label>
+									<div class="formlayer-switch-wrapper">
+										<label class="formlayer-switch">
+											<input type="checkbox" id="form-setting-conf-hide" checked>
+											<span class="slider round"></span>
+										</label>
+									</div>
 								</div>
 							</div>
 

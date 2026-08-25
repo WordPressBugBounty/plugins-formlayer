@@ -3,7 +3,7 @@
 Plugin Name: FormLayer
 Plugin URI: https://formlayer.net
 Description: Build fast and powerful contact forms in WordPress with an intuitive drag-and-drop builder packed with smart features.
-Version: 1.0.8
+Version: 1.0.9
 Author: Softaculous Team
 Author URI: https://softaculous.com/
 Text Domain: formlayer
@@ -20,7 +20,7 @@ if(!function_exists('add_action')){
 }
 
 // Define Constants
-define('FORMLAYER_VERSION', '1.0.8' );
+define('FORMLAYER_VERSION', '1.0.9' );
 define('FORMLAYER_FILE', __FILE__);
 define('FORMLAYER_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('FORMLAYER_PLUGIN_URL', plugin_dir_url(__FILE__));

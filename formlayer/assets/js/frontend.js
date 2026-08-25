@@ -69,8 +69,7 @@ jQuery(document).ready(function($){
 				$submit_Btn.prop('disabled', false).removeClass('loading');
 				
 				if(response.success){
-					var settings = response.data.settings || {};
-					var confirmation = settings.confirmations || { type: 'message', message: 'Thank you! Your form has been submitted successfully.', hide_form: true };
+					var confirmation = response.data.settings || { type: 'message', message: 'Thank you! Your form has been submitted successfully.', hide_form: true };
 					
 					if(confirmation.type === 'redirect' && confirmation.redirect_url){
 						$status.addClass('formlayer-success-message').html('Redirecting...');

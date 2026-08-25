@@ -314,9 +314,8 @@ class Ajax{
 
 		wp_send_json_success([
 			'message'=> !empty($settings['confirmations']['message']) ? $settings['confirmations']['message'] : 'Thank you! Your form has been submitted successfully.',
-			'settings'=> $settings,
+			'settings' => !empty($settings['confirmations']) ?  $settings['confirmations'] : [],
 			'mail_sent' => $mail_sent,
-			'entry_id' => $entry_id,
 		]);
 	}
 

@@ -3705,7 +3705,6 @@ gap: 8px;
 justify-content: center;
 flex: 1;
 position: relative;
-left: -190px;
 }
 .formlayer-builder-title-input {
 display: none;
@@ -4050,7 +4049,6 @@ gap: 8px;
 justify-content: center;
 flex: 1;
 position: relative;
-left: -190px;
 }
 
 .formlayer-builder-title-input-el {
